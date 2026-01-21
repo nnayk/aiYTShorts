@@ -8,11 +8,11 @@ from datetime import datetime
 app = Flask(__name__)
 
 # Setup Gemini client
-API_KEY = os.environ.get("GEMINI_KEY")
-if not API_KEY:
-    raise ValueError("GEMINI_KEY environment variable is not set")
+# API_KEY = os.environ.get("GEMVINI_KEY")
+# if not API_KEY:
+#     raise ValueError("GEMINI_KEY environment variable is not set")
 
-client = genai.Client(api_key=API_KEY)
+# client = genai.Client(api_key=API_KEY)
 
 @app.route('/generateImage', methods=['POST'])
 def generate_image():
@@ -26,11 +26,12 @@ def generate_image():
     """
     try:
         # Get prompt from request
-        data = request.get_json()
-        if not data or 'prompt' not in data:
-            return jsonify({'error': 'Missing "prompt" in request body'}), 400
+        # data = request.get_json()
+        # if not data or 'prompt' not in data:
+        #     return jsonify({'error': 'Missing "prompt" in request body'}), 400
         
-        prompt = data['prompt']
+        # prompt = data['prompt']
+        prompt = "Leon Edwards knocks out Kamaru Usman"
         
         print(f"Generating image with prompt: {prompt}")
         
@@ -79,8 +80,54 @@ def health():
     """Health check endpoint"""
     return jsonify({'status': 'healthy'}), 200
 
+# add a test endpoint that just prints the payload it received.
+@app.route('/test', methods=['POST'])
+def test():
+    """Test endpoint"""
+    data = request.get_json()
+    print(f"Received data: {data}")
+    print(f'data.key: {data.keys()}')
+    return jsonify({'status': 'received'}), 200
+
+# add a new endpoint "/image" which adds an image link to a given file name
+@app.route('/image', methods=['POST'])
+def add_image():
+    """Add an image link to a given file name"""
+    data = request.get_json()
+    print(f"Received data: {data}")
+    if not data or 'filename' not in data or 'image_url' not in data:
+        return jsonify({'error': 'Missing "filename" or "image_url" in request body'}), 400
+    
+    filename = data['filename']
+    image_url = data['image_url']
+    
+    # Add the image link to the file
+    with open(filename, 'a+') as f:
+        f.write(f"{image_url}\n")
+    
+    return jsonify({'status': 'Image added'}), 200
+
+# add a new endpoint "/video" which is a POST endpoint which takes a file name and generates a video from the images in the file.
+@app.route('/video', methods=['POST'])
+def generate_video():
+    """Generate a video from a given file name"""
+    data = request.get_json()
+    print(f"Received data: {data}")
+    if not data or 'filename' not in data:
+        return jsonify({'error': 'Missing "filename" in request body'}), 400
+    
+    filename = data['filename']
+    
+    # Generate the video
+    # create_slideshow(filename)
+    
+    return jsonify({'status': 'Video generated'}), 200
+
+# add a new endpoint which returns the get
+
 if __name__ == '__main__':
     print("Starting Flask server...")
     print("API endpoint: POST http://localhost:5000/generateImage")
     print("Example request body: {\"prompt\": \"A beautiful sunset over mountains\"}")
     app.run(debug=True, port=5000)
+

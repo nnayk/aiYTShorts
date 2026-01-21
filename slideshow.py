@@ -8,6 +8,17 @@ image_duration = 2  # Seconds to show each image
 fps = 24            # Frames per second for the video
 
 def create_slideshow():
+    # Download all images from myFile.txt
+    with open('myFile.txt', 'r') as f:
+        image_urls = f.readlines()
+        for url in image_urls:
+            url = url.strip()  # Remove newline and whitespace
+            if not url:  # Skip empty lines
+                continue
+            filename = url.split('/')[-1]
+            print(f"Downloading {url}")
+            os.system(f"curl -L '{url}' -o '{filename}'")
+
     # 1. Get all .png files from the directory
     images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
     
