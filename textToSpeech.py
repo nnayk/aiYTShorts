@@ -57,9 +57,9 @@ for num, text in enumerate(texts):
     end = time.time()
     print(f"Time to play audio {num}: {end - start}")
     audios.append(audio)
-    with open(f"audio_{num}.mp3", "wb") as f:
+    with open(f"audio_{num+1}.mp3", "wb") as f:
         f.write(b"".join(audio))
-    pdb.set_trace()
+    # pdb.set_trace()
 
 # audio = client.text_to_speech.convert(
 #     text="Morocco was set to host the 2025 Africa Cup of Nations, promising a summer tournament to avoid clashes with club seasons.",
@@ -69,23 +69,23 @@ for num, text in enumerate(texts):
 # )
 # play(audio)
 
-merged_audio = AudioSegment.empty()
+# merged_audio = AudioSegment.empty()
 
 
-for audio in audios:
-    # ElevenLabs returns a generator → convert to bytes
-    audio_bytes = b"".join(audio)
+# for audio in audios:
+#     # ElevenLabs returns a generator → convert to bytes
+#     audio_bytes = b"".join(audio)
 
-    # Load into AudioSegment
-    segment = AudioSegment.from_file(
-        io.BytesIO(audio_bytes),
-        format="mp3"
-    )
+#     # Load into AudioSegment
+#     segment = AudioSegment.from_file(
+#         io.BytesIO(audio_bytes),
+#         format="mp3"
+#     )
 
-    merged_audio += segment
+#     merged_audio += segment
 
-# Export final merged file
-merged_audio.export("final_audio.mp3", format="mp3")
+# # Export final merged file
+# merged_audio.export("final_audio.mp3", format="mp3")
 
 
-# merge all audios in audios list into one audio file. keep in mind each audio element is a TextToSpeechClient generator.
+# # merge all audios in audios list into one audio file. keep in mind each audio element is a TextToSpeechClient generator.

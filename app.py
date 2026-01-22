@@ -89,6 +89,22 @@ def test():
     print(f'data.key: {data.keys()}')
     return jsonify({'status': 'received'}), 200
 
+@app.route('/script', methods=['POST'])
+def add_script():
+    """Add an script link to a given file name"""
+    data = request.get_json()
+    print(f"Received data: {data}")
+    if not data or 'filename' not in data or 'script' not in data:
+        return jsonify({'error': 'Missing "filename" or "script" in request body'}), 400
+    
+    filename = data['filename']
+    script = data['script']
+    
+    # Add the script link to the file
+    with open(filename, 'a+') as f:
+        f.write(f"{script}\n---END OF SCRIPT---\n")
+    
+    return jsonify({'status': 'Image added'}), 200
 # add a new endpoint "/image" which adds an image link to a given file name
 @app.route('/image', methods=['POST'])
 def add_image():
