@@ -1,0 +1,18 @@
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+    -H "Content-Type: application/json" \
+      -X POST \
+        -d '{
+            "contents": [
+                  {
+                          "parts": [
+                                    {"text": "Explain the brahim diaz afcon controvery "}
+                                            ]
+                                                  }
+                                                      ],
+                                                          "tools": [
+                                                                {
+                                                                        "google_search": {}
+                                                                              }
+                                                                                  ]
+                                                                                    }'

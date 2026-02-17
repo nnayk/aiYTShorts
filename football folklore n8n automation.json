@@ -1,0 +1,428 @@
+{
+  "name": "CURRENT EVENTS n8n YT automation",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Get the raw Gemini response JSON from the previous node\nconst response = $json;\n\n// Safely extract the text field\nconst textOutput =\n  response?.candidates?.[0]?.content?.parts?.[0]?.text;\n\nif (!textOutput) {\n  throw new Error('No text output found in Gemini response');\n}\n\n// Parse the text (it is a JSON string)\nlet parsed;\nconsole.log(`textOutput=${textOutput}`)\ntry {\n  parsed = JSON.parse(textOutput);\n} catch (err) {\n  throw new Error('Failed to parse Gemini text output as JSON');\n}\n\n// Return parsed JSON so n8n can use it downstream\nreturn parsed;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        400
+      ],
+      "id": "8659e0d7-ecff-4515-85be-806467ee3bb5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -656,
+        400
+      ],
+      "id": "cc7318c0-4aee-4f58-b128-bcd7f4c13cb5",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "content": "prolly don't need this code block"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1264,
+        208
+      ],
+      "typeVersion": 1,
+      "id": "6322cd35-21e9-40ac-9a92-33c882e0c6be",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "idea is I'll loop over each image, sending a prompt consisting of entire story + image description to kie ai. THen I'll add 2 nodes following kie ai (one wait node, one save image to local directory under a new directory named the story's title).\n\n- after this flow ^, I will call my python api with the path to the images. This will then take care of the entire video generation.\n- then after ^ is done I'll post using blotato"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -864,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "10b910ba-66fb-4a04-9356-7752c3800da2",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "amount": 180
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        400
+      ],
+      "id": "db9a4e5f-4409-4259-b018-5e63a0131f07",
+      "name": "Wait",
+      "webhookId": "465f1565-6274-4d77-9612-7c61bea4675d",
+      "notes": "- gpt 4o image gen seems to take up to 60s"
+    },
+    {
+      "parameters": {
+        "url": "https://api.kie.ai/api/v1/jobs/recordInfo",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 5c17d5e6aac45367156a7180e79d8c0b"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        384
+      ],
+      "id": "0d2dee4f-03a2-4f8c-b70a-8876404bc173",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nconst data =  $input.first().json.data.resultJson\nconst urlDict = JSON.parse(data)\nconsole.log('urlDict =', urlDict);\nconsole.log('urlDict[\"resultUrls\"][0] =', urlDict.resultUrls[0])\n\nreturn urlDict;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        384
+      ],
+      "id": "e0b92613-00a6-4a58-af4b-9d34b25014a6",
+      "name": "Code1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1968,
+        400
+      ],
+      "id": "38df2de7-cd43-4f14-aeda-e562e449ed99",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5000/image",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Application-type",
+              "value": "content/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.resultUrls[0] }}"
+            },
+            {
+              "name": "filename",
+              "value": "myFile.txt"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        384
+      ],
+      "id": "cf86959f-c3d4-4440-a955-4405ebfa5585",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5000/video",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "=test"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        144,
+        64
+      ],
+      "id": "946b13cc-8242-42a5-8994-1a92b4ccda5a",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "content": "POST request to \nproduce the video"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "823d79ac-6715-4cad-a8b3-ec4b5e58e8b6",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 5c17d5e6aac45367156a7180e79d8c0b"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"nano-banana-pro\",\n    \"input\": {\n        \"prompt\": \"{{ $json.description }}. Make sure it is sports comic cartoon themed and highly realistic. Make sure minimal text is used and that it is spelled correctly! The visual must be cartoon-themed, cinematic, emotionally clear, and visually explicit. Important: use accurate teams, kits, logos, stadium atmosphere, and historical details. Identity duplication is not allowed under any circumstances (each named player appears only once in an image). VERY IMPORTANT: Make sure the image dimensions are 1080x1920 pixels and the aspect ratio is 9:16. Important: Make sure that if you depict a player shooting a ball, that the player is facing the goal and the ball is heading towards the goal.\",\n        \"aspect_ratio\": \"9:16\"\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        384
+      ],
+      "id": "6f74a365-0366-4564-aac7-fe201a272c0b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5000/script",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "voiceoverPrompt",
+              "value": "={{ $json.voiceoverPrompt }}"
+            },
+            {
+              "name": "filename",
+              "value": "myFile.txt"
+            },
+            {
+              "name": "=imagePrompt",
+              "value": "={{ $json.imagePrompt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -320,
+        432
+      ],
+      "id": "bb3ee72c-8d62-4d4d-bc90-9ef60b0a7cc6",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyDGn1XlJr1a_v8h3WQxpXtyK3NDoGdfibY"
+            },
+            {
+              "name": "Content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n            \"contents\": [\n                  {\n                          \"parts\": [\n                                    {\"text\": \"You are a visual-first soccer storyteller designed for short-form content. Your task is to convert a real, well-known professional soccer moment into a concise, emotionally engaging visual story told entirely through images with a spoken voice-over. Specifically, tell the story of Germany 7-1 Brazil in 2014 World Cup. Include a scene for Neymar's injury which demoralized the team heavily. Also mention the extra humiliation from the fact that the game was played in Brazil. The story must be told chronologically using 5-7 image moments. The visuals must be sports comic cartoon-themed, cinematic, emotionally clear, and visually explicit. Follow a comic sports cartoon theme. Focus on iconic moments, physical confrontation, tension, and consequences. Do not invent facts. Try to avoid including readable text or dialogue inside the images (but if you do, it's crucial that the spelling is correct).  Important: use accurate teams, kits, logos, stadium atmosphere, and historical details. Important: For each image prompt, explicitly mention the teams involved and full player names. for eacDo not invent facts. Make sure that real-life characters depicted were really part of the events shown. Try to avoid including readable text or dialogue inside the images. Each image prompt must be optimized for high-quality image generation. Describe camera angle, framing, lighting, environment, player likeness, body language, and action clearly so an image model can render it accurately. Mention the teams involved, players involved, etc. for each image so that the image generator has enough context on what details to include. Keep descriptions concrete and visual, not abstract. Each voiceover prompt will be read word for word as spoken narration. The voice-over must sound natural, concise, factual, and emotionally aligned to the image. Do not include timestamps or stage directions in the voice-over text. Return only a valid JSON array with 5-7 images and no additional text. Each object must contain only the following keys: number, imagePrompt, and voiceoverPrompt. The first object must have number set to 0 the second must have number set to 1, and so on. Do not include any additional keys, trailing commas, or formatting outside the JSON array. The output structure must be exactly: [ { 'number': 0, 'imagePrompt': 'string', 'voiceoverPrompt': 'string' }, { 'number': 1, 'imagePrompt': 'string', 'voiceoverPrompt': 'string' }, … ]'\" } ] } ], \"tools\": [ { \"google_search\": {} } ] }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1744,
+        400
+      ],
+      "id": "c06ee4c4-80db-4a1a-832f-55b4fac5f9fc",
+      "name": "HTTP Request4",
+      "notes": "api key is \"n8n testing\" from nakul.indus@gmail.com"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "41f4dbd9-b460-46e0-973b-e377336e1be6",
+  "meta": {
+    "instanceId": "cc64117b9e96e8bc0b81abcc8ffe21ea0d4e92acea46eb2911c0d2aa11d9d58e"
+  },
+  "id": "eF6SQD3SHethmpp40nwyZ",
+  "tags": []
+}
